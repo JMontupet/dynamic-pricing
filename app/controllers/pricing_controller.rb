@@ -6,12 +6,22 @@ class PricingController < ApplicationController
   before_action :validate_params
 
   def index
-    period = params[:period]
-    hotel  = params[:hotel]
-    room   = params[:room]
-
-    # TODO: Start to implement here
-    render json: { rate: "12000" }
+    rate = pricing_service.get_rate(
+      period: params[:period],
+      hotel:  params[:hotel],
+      room:   params[:room]
+    )
+    render json: { rate: rate }
+  rescue PricingModelClient::TransportError
+    render json: { error: "Pricing service unavailable" }, status: :service_unavailable
+  rescue PricingModelClient::ModelError => e
+    render json: { error: e.message }, status: :bad_gateway
+  rescue PricingModelClient::FormatError
+    render json: { error: "Invalid pricing data" }, status: :bad_gateway
+  rescue PricingModelClient::RateLimitError => e
+    render json: { error: e.message }, status: :too_many_requests
+  rescue PricingService::CircuitOpenError => e
+    render json: { error: e.message }, status: :service_unavailable
   end
 
   private
@@ -34,5 +44,9 @@ class PricingController < ApplicationController
     unless VALID_ROOMS.include?(params[:room])
       return render json: { error: "Invalid room. Must be one of: #{VALID_ROOMS.join(', ')}" }, status: :bad_request
     end
+  end
+
+  def pricing_service
+    PricingService.instance
   end
 end

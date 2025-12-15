@@ -1,18 +1,28 @@
 require "test_helper"
+require "minitest/mock"
 
 class PricingControllerTest < ActionDispatch::IntegrationTest
   test "should get pricing with all parameters" do
-    get pricing_url, params: {
+    fake_client = Minitest::Mock.new
+    fake_client.expect :fetch_rate, "12000", [
       period: "Summer",
       hotel: "FloatingPointResort",
       room: "SingletonRoom"
-    }
+    ]
+    def fake_client.fetch_rate(**); "12000"; end
+    PricingModelClient.stub :new, fake_client do
+      get pricing_url, params: {
+        period: "Summer",
+        hotel: "FloatingPointResort",
+        room: "SingletonRoom"
+      }
 
-    assert_response :success
-    assert_equal "application/json", @response.media_type
+      assert_response :success
+      assert_equal "application/json", @response.media_type
 
-    json_response = JSON.parse(@response.body)
-    assert_equal "12000", json_response["rate"]
+      json_response = JSON.parse(@response.body)
+      assert_equal "12000", json_response["rate"]
+    end
   end
 
   test "should return error without any parameters" do

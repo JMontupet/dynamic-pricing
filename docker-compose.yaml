@@ -1,0 +1,17 @@
+services:
+  app:
+    image: interview-app
+    build:
+      context: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./:/rails
+    environment:
+      PRICING_MODEL_URL: http://rate_model:8080/pricing
+      PRICING_MODEL_TOKEN: ${PRICING_MODEL_TOKEN}
+
+  rate_model:
+    image: tripladev/rate-api
+    ports:
+      - "8080:8080"

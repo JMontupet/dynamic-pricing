@@ -42,3 +42,7 @@ group :development do
   gem "listen", "~> 3.3"
 end
 
+
+gem "faraday", "~> 2.14"
+
+gem "faraday-retry", "~> 2.3"
